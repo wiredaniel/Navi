@@ -1,0 +1,18 @@
+[Unit]
+Description=Pi Agent Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wiredaniel
+WorkingDirectory=/home/wiredaniel/pibot
+EnvironmentFile=/home/wiredaniel/pibot/.env
+ExecStart=/home/wiredaniel/pibot/venv/bin/python bot.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
