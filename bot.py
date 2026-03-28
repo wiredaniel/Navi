@@ -6,25 +6,18 @@ from datetime import datetime
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 from groq import Groq
+from dotenv import load_dotenv
 
-TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
-GROQ_API_KEY   = os.environ["GROQ_API_KEY"]
-ALLOWED_USER   = int(os.environ["ALLOWED_USER_ID"])
+load_dotenv()
+
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+GROQ_API_KEY   = os.getenv("GROQ_API_KEY")
+ALLOWED_USER   = int(os.getenv("ALLOWED_USER_ID"))
 MODEL          = "llama-3.3-70b-versatile"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 groq_client = Groq(api_key=GROQ_API_KEY)
-
-def estado_sistema():
-    try:
-        cpu    = subprocess.check_output("top -bn1 | grep 'Cpu(s)' | awk '{print $2}'", shell=True).decode().strip()
-        ram    = subprocess.check_output("free -h | awk '/Mem:/{print $3\"/\"$2}'", shell=True).decode().strip()
-        disco  = subprocess.check_output("df -h / | awk 'NR==2{print $3\"/\"$2\" (\"$5\" uso)\"}'", shell=True).decode().strip()
-        uptime = subprocess.check_output("uptime -p", shell=True).decode().strip()
-        return f"CPU: {cpu}%\nRAM: {ram}\nDisco: {disco}\nUptime: {uptime}"
-    except Exception as e:
-        return f"Error: {e}"
 
 def ejecutar_comando(comando):
     BLOQUEADOS = ["rm -rf", "mkfs", "dd", "shutdown", "reboot", ":(){"]
@@ -40,40 +33,33 @@ def ejecutar_comando(comando):
         return f"Error ({e.returncode}): {e.output.strip()}"
 
 TOOLS_FN = {
-    "estado_sistema":   estado_sistema,
     "ejecutar_comando": ejecutar_comando,
 }
 
 TOOLS_SCHEMA = [
     {
-        "type": "function",
-        "function": {
-            "name": "estado_sistema",
-            "description": "Devuelve CPU, RAM, disco y uptime de la Raspberry Pi.",
-            "parameters": {"type": "object", "properties": {}}
-        }
-    },
-    {
-        "type": "function",
-        "function": {
+        "type": "json_schema",
+        "json_schema": {
             "name": "ejecutar_comando",
+            "strict": True,
             "description": "Ejecuta un comando bash en la Raspberry Pi.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "comando": {"type": "string", "description": "Comando bash a ejecutar"}
                 },
-                "required": ["comando"]
+                "required": ["comando"],
+                "additionalProperties": False
             }
         }
-    },
+    }
 ]
 
 SYSTEM_PROMPT = f"""Eres un asistente de terminal corriendo en una Raspberry Pi 4.
-Puedes ejecutar comandos bash y revisar el estado del sistema.
+Puedes ejecutar comandos bash.
 Usuario: wiredaniel. Directorio home: /home/wiredaniel.
 Nunca uses sudo ni comandos destructivos.
-Si la solicitud requiere generar codigo solo genera el source, no lo ejecutes.
+Si la solicitud requiere generar codigo solo genera el source y guardalo.
 Se conciso."""
 
 def run_agent(user_message):
@@ -82,7 +68,7 @@ def run_agent(user_message):
         {"role": "user",   "content": user_message}
     ]
 
-    for _ in range(5):
+    for _ in range(8):
         try:
             response = groq_client.chat.completions.create(
                 model=MODEL,
@@ -163,4 +149,6 @@ def main():
     app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
+    
     main()
+    
