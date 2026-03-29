@@ -38,8 +38,8 @@ TOOLS_FN = {
 
 TOOLS_SCHEMA = [
     {
-        "type": "json_schema",
-        "json_schema": {
+        "type": "function",
+        "function": {
             "name": "ejecutar_comando",
             "strict": True,
             "description": "Ejecuta un comando bash en la Raspberry Pi.",
@@ -55,12 +55,17 @@ TOOLS_SCHEMA = [
     }
 ]
 
-SYSTEM_PROMPT = f"""Eres un asistente de terminal corriendo en una Raspberry Pi 4.
-Puedes ejecutar comandos bash.
-Usuario: wiredaniel. Directorio home: /home/wiredaniel.
-Nunca uses sudo ni comandos destructivos.
+SYSTEM_PROMPT = f"""Eres un asistente de terminal corriendo en una PC con windows 10.
+Puedes ejecutar comandos.
+
+Cuando necesites usar una herramienta, SIEMPRE usa el formato oficial de function calling.
+NUNCA uses formatos como <function=...> o [TOOL: ...].
+Los argumentos SIEMPRE deben ser JSON válido.
+Las URLs deben ir como strings planos, sin markdown ni underscores adicionales.
+
+Nunca uses comandos destructivos.
 Si la solicitud requiere generar codigo solo genera el source y guardalo.
-Se conciso."""
+Se conciso"""
 
 def run_agent(user_message):
     messages = [
@@ -68,7 +73,7 @@ def run_agent(user_message):
         {"role": "user",   "content": user_message}
     ]
 
-    for _ in range(8):
+    for _ in range(3): # 3 pasos extra en caso de que falle el primer paso
         try:
             response = groq_client.chat.completions.create(
                 model=MODEL,
@@ -82,7 +87,9 @@ def run_agent(user_message):
             return f"Error al llamar al modelo: {e}"
 
         msg = response.choices[0].message
-
+        print(f"\n\n\n Eleccion del modelo: \n{msg} \n\n\n")
+        
+        
         if not msg.tool_calls:
             return msg.content or "(sin respuesta)"
 
@@ -133,6 +140,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         log.error(f"Error: {e}")
         respuesta = f"Error interno: {e}"
 
+    print(f"\n\n RESULTADO DEL BOT : \n {respuesta} \n\n\n ")
     await update.message.reply_text(respuesta)
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
