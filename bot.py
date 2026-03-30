@@ -20,9 +20,6 @@ log = logging.getLogger(__name__)
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 def ejecutar_comando(comando):
-    BLOQUEADOS = ["rm -rf", "mkfs", "dd", "shutdown", "reboot", ":(){"]
-    if any(b in comando for b in BLOQUEADOS):
-        return f"Comando bloqueado: '{comando}'"
     try:
         resultado = subprocess.check_output(
             comando, shell=True, stderr=subprocess.STDOUT, timeout=15, text=True)
@@ -42,11 +39,11 @@ TOOLS_SCHEMA = [
         "function": {
             "name": "ejecutar_comando",
             "strict": True,
-            "description": "Ejecuta un comando bash en la Raspberry Pi.",
+            "description": "Ejecuta un comando en cmd en Windows 10.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "comando": {"type": "string", "description": "Comando bash a ejecutar"}
+                    "comando": {"type": "string", "description": "Comando a ejecutar"}
                 },
                 "required": ["comando"],
                 "additionalProperties": False
