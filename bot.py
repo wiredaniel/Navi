@@ -16,16 +16,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger(__name__)
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-def estado_sistema():
-    try:
-        cpu    = subprocess.check_output("top -bn1 | grep 'Cpu(s)' | awk '{print $2}'", shell=True).decode().strip()
-        ram    = subprocess.check_output("free -h | awk '/Mem:/{print $3\"/\"$2}'", shell=True).decode().strip()
-        disco  = subprocess.check_output("df -h / | awk 'NR==2{print $3\"/\"$2\" (\"$5\" uso)\"}'", shell=True).decode().strip()
-        uptime = subprocess.check_output("uptime -p", shell=True).decode().strip()
-        return f"CPU: {cpu}%\nRAM: {ram}\nDisco: {disco}\nUptime: {uptime}"
-    except Exception as e:
-        return f"Error: {e}"
-
 def ejecutar_comando(comando):
     BLOQUEADOS = ["rm -rf", "mkfs", "dd", "shutdown", "reboot", ":(){"]
     if any(b in comando for b in BLOQUEADOS):
@@ -40,19 +30,10 @@ def ejecutar_comando(comando):
         return f"Error ({e.returncode}): {e.output.strip()}"
 
 TOOLS_FN = {
-    "estado_sistema":   estado_sistema,
-    "ejecutar_comando": ejecutar_comando,
+    "ejecutar_comando": ejecutar_comando
 }
 
 TOOLS_SCHEMA = [
-    {
-        "type": "function",
-        "function": {
-            "name": "estado_sistema",
-            "description": "Devuelve CPU, RAM, disco y uptime de la Raspberry Pi.",
-            "parameters": {"type": "object", "properties": {}}
-        }
-    },
     {
         "type": "function",
         "function": {
@@ -70,7 +51,7 @@ TOOLS_SCHEMA = [
 ]
 
 SYSTEM_PROMPT = f"""Eres un asistente de terminal corriendo en una Raspberry Pi 4.
-Puedes ejecutar comandos bash y revisar el estado del sistema.
+Puedes ejecutar comandos bash.
 Usuario: wiredaniel. Directorio home: /home/wiredaniel.
 Nunca uses sudo ni comandos destructivos.
 Si la solicitud requiere generar codigo solo genera el source, no lo ejecutes.
@@ -82,7 +63,7 @@ def run_agent(user_message):
         {"role": "user",   "content": user_message}
     ]
 
-    for _ in range(5):
+    for _ in range(3):
         try:
             response = groq_client.chat.completions.create(
                 model=MODEL,
