@@ -38,12 +38,14 @@ TOOLS_SCHEMA = [
         "type": "function",
         "function": {
             "name": "ejecutar_comando",
+            "strict": True,
             "description": "Ejecuta un comando bash en la Raspberry Pi.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "comando": {"type": "string", "description": "Comando bash a ejecutar"}
                 },
+                "additionalProperties": False,
                 "required": ["comando"]
             }
         }
@@ -53,6 +55,12 @@ TOOLS_SCHEMA = [
 SYSTEM_PROMPT = f"""Eres un asistente de terminal corriendo en una Raspberry Pi 4.
 Puedes ejecutar comandos bash.
 Usuario: wiredaniel. Directorio home: /home/wiredaniel.
+
+Cuando necesites usar una herramienta, SIEMPRE usa el formato oficial de function calling.
+NUNCA uses formatos como <function=...> o [TOOL: ...].
+Los argumentos SIEMPRE deben ser JSON válido.
+Las URLs deben ir como strings planos, sin markdown ni underscores adicionales.
+
 Nunca uses sudo ni comandos destructivos.
 Si la solicitud requiere generar codigo solo genera el source, no lo ejecutes.
 Se conciso."""
