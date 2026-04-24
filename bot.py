@@ -70,7 +70,7 @@ def run_agent(user_message):
         {"role": "user",   "content": user_message}
     ]
 
-    for _ in range(3):
+    for _ in range(5):
         try:
             response = groq_client.chat.completions.create(
                 model=MODEL,
