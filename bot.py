@@ -56,12 +56,16 @@ SYSTEM_PROMPT = f"""Eres un asistente de terminal corriendo en una Raspberry Pi 
 Puedes ejecutar comandos bash.
 Usuario: wiredaniel. Directorio home: /home/wiredaniel.
 
+<<<<<<< HEAD
 Cuando necesites usar una herramienta, SIEMPRE usa el formato oficial de function calling JSON.
+=======
+Cuando necesites usar una herramienta, SIEMPRE usa el formato json.
+>>>>>>> db2d865 (Update)
 Los argumentos SIEMPRE deben ser JSON válido.
 Las URLs deben ir como strings planos, sin markdown ni underscores adicionales.
 
 Nunca uses sudo ni comandos destructivos.
-Si la solicitud requiere generar codigo solo genera el source, no lo ejecutes.
+Si la solicitud requiere generar codigo solo genera el archivo, no lo ejecutes.
 Se conciso."""
 
 def run_agent(user_message):
@@ -70,7 +74,11 @@ def run_agent(user_message):
         {"role": "user",   "content": user_message}
     ]
 
+<<<<<<< HEAD
     for _ in range(5):
+=======
+    for _ in range(6):
+>>>>>>> db2d865 (Update)
         try:
             response = groq_client.chat.completions.create(
                 model=MODEL,
